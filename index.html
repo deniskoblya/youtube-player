@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+	</head>
+	<body>
+		<div class="wrapper">			
+			<section>
+				<div class="container">
+					<div class="row mb-4">
+						<div class="col-md-4">
+							<div class="video-bl" data-video="zpOULjyy-n8"></div>
+						</div>
+						<div class="col-md-4">
+							<div class="video-bl" data-video="zpOULjyy-n8" data-bg="images/img1.jpg"></div>
+						</div>
+						<div class="col-md-4">
+							<div class="video-bl" data-video="zpOULjyy-n8"></div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-6">
+							<div class="video-bl" data-video="zpOULjyy-n8"></div>
+						</div>
+						<div class="col-md-6">
+							<div class="video-bl" data-video="zpOULjyy-n8"></div>
+						</div>
+						<div class="col-md-12 mt-4">
+							<div class="video-bl" data-video="zpOULjyy-n8"></div>
+						</div>
+					</div>
+				</div>
+			</section>
+		</div>
+		
+		<style>
+			.video-bl {
+				background: #000;
+			}
+			.cl9-toggle-play {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				text-align: center;
+				position:absolute;
+				left: 0;
+				right:0;
+				top:0;
+				bottom:0;
+				z-index:5;
+				background-size: cover;
+				background-position: center center;
+				background-repeat: no-repeat;
+				transition: 0.15s all;
+				opacity: 1;
+			}
+			.cl9-toggle-play.in-process {
+				pointer-events: none;
+				opacity: .95;
+			}
+			.cl9-toggle-play.c-hide {
+				opacity: 0;
+			}
+			.cl9-toggle-play .play-icn {
+				transition: 0.2s all;
+				width: 15%;
+				color: rgba(255, 0, 0, 0.6);
+			}
+			.cl9-toggle-play:hover .play-icn {
+				color: rgba(255, 0, 0, 1);
+			}
+		</style>
+		<script src="https://www.youtube.com/iframe_api"></script>
+		<script>			
+			var players = new Array();
+			
+			$(document).ready(function(){
+				
+			   $(document).on('click','.cl9-toggle-play', function(){
+					var playBtn = $(this);
+					var plBlock = playBtn.closest('.video-bl');
+					var videoBlockId = plBlock.find('.embed-responsive-item').attr('id');
+					
+					playBtn.addClass('in-process');
+					
+					// Сначала останавливаем все плееры
+					$(players).each(function(){							   
+						let state = this.getPlayerState();
+					   
+						if ( state === 1 ) {
+							this.pauseVideo();
+						}
+						
+						$('#'+this.videoBlockId).closest('.video-bl').find('.cl9-toggle-play').removeClass('c-hide');
+					});
+					
+					// Если плеер уже инициализирован
+					if ( plBlock.find('iframe').length ) {
+						$(players).each(function(){
+						   if( this.videoBlockId == videoBlockId ) {							   
+							   var state = this.getPlayerState();
+							   
+							    if ( state === 1 ) {
+									this.pauseVideo();
+									playBtn.removeClass('c-hide');
+							    } else {
+									playBtn.addClass('c-hide');
+									this.playVideo();
+							    }
+						   }
+						});
+						playBtn.removeClass('in-process');
+						
+					// Иначе инициализируем
+					} else {
+						var videoID = plBlock.data('video');
+					   
+						var player = new YT.Player(videoBlockId, {
+							playerVars: {
+								'controls': 0,
+								'showinfo': 0,
+								'rel': 0,
+								'autoplay': 0
+							},
+							videoId: videoID
+						});
+
+						player.videoBlockId = videoBlockId;
+
+						players.push(player);
+						
+						var playVideoInt = setInterval(function(){
+							$(players).each(function(){
+								if( this.videoBlockId == videoBlockId && this.getPlayerState() ) {
+									clearInterval(playVideoInt);
+									
+									playBtn.addClass('c-hide');
+								   
+									var state = this.getPlayerState();
+								   
+									if ( state === 1 ) {
+										this.pauseVideo();
+									} else {
+										this.playVideo();
+									}
+								}
+							});
+							playBtn.removeClass('in-process');
+						},200);
+					}
+			   });
+			});
+			
+			function onYouTubeIframeAPIReady() {
+				$('.video-bl').each(function(key){
+
+					let videoID = $(this).data('video');
+					let bgImage = $(this).data('bg');
+					let videoBlockId = 'player' + key;
+
+					if ( !videoID ) { return false; }
+					
+					if ( bgImage ) {
+						var bgImageUrl = bgImage;
+					} else {
+						var bgImageUrl = 'https://img.youtube.com/vi/'+videoID+'/0.jpg';
+					}
+
+					$(this).html('<div class="embed-responsive embed-responsive-16by9"><div class="embed-responsive-item" id="' + videoBlockId + '"></div><div class="cl9-toggle-play" style="background-image: url('+bgImageUrl+')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" class="play-icn"><path fill="currentColor" d="M549.655 124.083c-6.281-23.65-24.787-42.276-48.284-48.597C458.781 64 288 64 288 64S117.22 64 74.629 75.486c-23.497 6.322-42.003 24.947-48.284 48.597-11.412 42.867-11.412 132.305-11.412 132.305s0 89.438 11.412 132.305c6.281 23.65 24.787 41.5 48.284 47.821C117.22 448 288 448 288 448s170.78 0 213.371-11.486c23.497-6.321 42.003-24.171 48.284-47.821 11.412-42.867 11.412-132.305 11.412-132.305s0-89.438-11.412-132.305zm-317.51 213.508V175.185l142.739 81.205-142.739 81.201z"></path></svg></div></div>');
+				});
+			}
+			
+			function getRandomInt(max) {
+				return Math.floor(Math.random() * Math.floor(max));
+			}
+		</script>
+	</body>
+</html>
